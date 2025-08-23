@@ -147,12 +147,14 @@ lwgeom_node(const LWGEOM* lwgeom_in)
 	g1 = LWGEOM2GEOS(lwgeom_in, 1);
 	if ( ! g1 ) {
 		lwerror("LWGEOM2GEOS: %s", lwgeom_geos_errmsg);
+		finishGEOS();
 		return NULL;
 	}
 
 	ep = lwgeom_extract_unique_endpoints(lwgeom_in);
 	if ( ! ep ) {
 		GEOSGeom_destroy(g1);
+		finishGEOS();
 		lwerror("Error extracting unique endpoints from input");
 		return NULL;
 	}
@@ -162,6 +164,7 @@ lwgeom_node(const LWGEOM* lwgeom_in)
 	if ( ! gn ) {
 		lwgeom_free(ep);
 		lwerror("GEOSNode: %s", lwgeom_geos_errmsg);
+		finishGEOS();
 		return NULL;
 	}
 	LWDEBUGGEOS(1, gn, "Noded");
@@ -174,6 +177,7 @@ lwgeom_node(const LWGEOM* lwgeom_in)
 		if ( ! gm ) {
 			lwgeom_free(ep);
 			lwerror("GEOSLineMerge: %s", lwgeom_geos_errmsg);
+			finishGEOS();
 			return NULL;
 		}
 		LWDEBUGGEOS(1, gm, "LineMerged");
@@ -184,6 +188,7 @@ lwgeom_node(const LWGEOM* lwgeom_in)
 		if ( ! lines ) {
 			lwgeom_free(ep);
 			lwerror("Error during GEOS2LWGEOM");
+			finishGEOS();
 			return NULL;
 		}
 	}
@@ -195,6 +200,7 @@ lwgeom_node(const LWGEOM* lwgeom_in)
 		if ( ! lines ) {
 			lwgeom_free(ep);
 			lwerror("Error during GEOS2LWGEOM");
+			finishGEOS();
 			return NULL;
 		}
 	}
@@ -206,9 +212,11 @@ lwgeom_node(const LWGEOM* lwgeom_in)
 		if ( ! lines ) {
 			lwgeom_free(ep);
 			lwerror("Error during GEOS2LWGEOM");
+			finishGEOS();
 			return NULL;
 		}
 		lwgeom_set_srid(lines, lwgeom_in->srid);
+		finishGEOS();
 		return (LWGEOM*)lines;
 	}
 
@@ -281,6 +289,7 @@ lwgeom_node(const LWGEOM* lwgeom_in)
 	lwcollection_free(col);
 
 	lwgeom_set_srid(lines, lwgeom_in->srid);
+	finishGEOS();
 	return (LWGEOM*)lines;
 }
 

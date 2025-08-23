@@ -1223,7 +1223,7 @@ rt_raster_gdal_polygonize(
 			if (NULL != pszQuery)
 				rtdealloc(pszQuery);
 			OGRReleaseDataSource(memdatasource);
-
+			finishGEOS();
 			return NULL;
 		}
 
@@ -1288,7 +1288,7 @@ rt_raster_gdal_polygonize(
 	OGR_DS_DeleteLayer(memdatasource, 0);
 	if (NULL != pszQuery) rtdealloc(pszQuery);
 	OGRReleaseDataSource(memdatasource);
-
+	finishGEOS();
 	return pols;
 }
 

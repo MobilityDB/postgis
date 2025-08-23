@@ -1137,6 +1137,7 @@ rt_raster_compute_skewed_raster(
 		if (npoly == NULL) {
 			rterror("rt_raster_compute_skewed_raster: Could not build extent's geometry for covers test");
 			rt_raster_destroy(raster);
+			finishGEOS();
 			return NULL;
 		}
 
@@ -1152,6 +1153,7 @@ rt_raster_compute_skewed_raster(
 			rterror("rt_raster_compute_skewed_raster: Could not build skewed extent's geometry for covers test");
 			GEOSGeom_destroy(ngeom);
 			rt_raster_destroy(raster);
+			finishGEOS();
 			return NULL;
 		}
 
@@ -1165,6 +1167,7 @@ rt_raster_compute_skewed_raster(
 			rterror("rt_raster_compute_skewed_raster: Could not run covers test");
 			GEOSGeom_destroy(ngeom);
 			rt_raster_destroy(raster);
+			finishGEOS();
 			return NULL;
 		}
 
@@ -1200,6 +1203,7 @@ rt_raster_compute_skewed_raster(
 				rterror("rt_raster_compute_skewed_raster: Could not build skewed extent's geometry for minimizing dimensions");
 				GEOSGeom_destroy(ngeom);
 				rt_raster_destroy(raster);
+				finishGEOS();
 				return NULL;
 			}
 
@@ -1213,6 +1217,7 @@ rt_raster_compute_skewed_raster(
 				rterror("rt_raster_compute_skewed_raster: Could not run covers test for minimizing dimensions");
 				GEOSGeom_destroy(ngeom);
 				rt_raster_destroy(raster);
+				finishGEOS();
 				return NULL;
 			}
 		} while (covers);
@@ -1226,6 +1231,7 @@ rt_raster_compute_skewed_raster(
 
 	GEOSGeom_destroy(ngeom);
 
+	finishGEOS();
 	return raster;
 }
 

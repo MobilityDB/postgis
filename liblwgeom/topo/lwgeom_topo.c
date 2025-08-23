@@ -619,6 +619,7 @@ _lwt_CheckEdgeCrossing( LWT_TOPOLOGY* topo,
   if (!edgegg)
   {
     lwerror("Could not convert edge geometry to GEOS: %s", lwgeom_geos_errmsg);
+    finishGEOS();
     return -1;
   }
   edgebox = lwgeom_get_bbox( lwline_as_lwgeom(geom) );
@@ -630,6 +631,7 @@ _lwt_CheckEdgeCrossing( LWT_TOPOLOGY* topo,
   if (num_nodes == UINT64_MAX)
   {
     PGTOPO_BE_ERROR();
+    finishGEOS();
     return -1;
   }
   for ( i=0; i<num_nodes; ++i )
@@ -645,6 +647,7 @@ _lwt_CheckEdgeCrossing( LWT_TOPOLOGY* topo,
     if ( contains )
     {
       GEOSGeom_destroy(edgegg);
+      finishGEOS();
       _lwt_release_nodes(nodes, num_nodes);
       lwerror("SQL/MM Spatial exception - geometry crosses a node");
       return -1;
@@ -659,6 +662,7 @@ _lwt_CheckEdgeCrossing( LWT_TOPOLOGY* topo,
   if (num_edges == UINT64_MAX)
   {
     GEOSGeom_destroy(edgegg);
+    finishGEOS();
     PGTOPO_BE_ERROR();
     return -1;
   }
@@ -675,12 +679,14 @@ _lwt_CheckEdgeCrossing( LWT_TOPOLOGY* topo,
     if ( ! edge->geom ) {
       _lwt_release_edges(edges, num_edges);
       lwerror("Edge %" LWTFMT_ELEMID " has NULL geometry!", edge_id);
+      finishGEOS();
       return -1;
     }
 
     eegg = LWGEOM2GEOS( lwline_as_lwgeom(edge->geom), 0 );
     if ( ! eegg ) {
       GEOSGeom_destroy(edgegg);
+      finishGEOS();
       _lwt_release_edges(edges, num_edges);
       lwerror("Could not convert edge geometry to GEOS: %s", lwgeom_geos_errmsg);
       return -1;
@@ -694,7 +700,8 @@ _lwt_CheckEdgeCrossing( LWT_TOPOLOGY* topo,
     GEOSGeom_destroy(eegg);
     if ( ! relate ) {
       GEOSGeom_destroy(edgegg);
-      _lwt_release_edges(edges, num_edges);
+      finishGEOS();
+     _lwt_release_edges(edges, num_edges);
       lwerror("GEOSRelateBoundaryNodeRule error: %s", lwgeom_geos_errmsg);
       return -1;
     }
@@ -708,6 +715,7 @@ _lwt_CheckEdgeCrossing( LWT_TOPOLOGY* topo,
       if ( match == 2 ) {
         _lwt_release_edges(edges, num_edges);
         GEOSGeom_destroy(edgegg);
+        finishGEOS();
         lwerror("GEOSRelatePatternMatch error: %s", lwgeom_geos_errmsg);
         return -1;
       }
@@ -719,6 +727,7 @@ _lwt_CheckEdgeCrossing( LWT_TOPOLOGY* topo,
       _lwt_release_edges(edges, num_edges);
       GEOSGeom_destroy(edgegg);
       GEOSFree(relate);
+      finishGEOS();
       if ( match == 2 ) {
         lwerror("GEOSRelatePatternMatch error: %s", lwgeom_geos_errmsg);
       } else {
@@ -733,6 +742,7 @@ _lwt_CheckEdgeCrossing( LWT_TOPOLOGY* topo,
       _lwt_release_edges(edges, num_edges);
       GEOSGeom_destroy(edgegg);
       GEOSFree(relate);
+      finishGEOS();
       if ( match == 2 ) {
         lwerror("GEOSRelatePatternMatch error: %s", lwgeom_geos_errmsg);
       } else {
@@ -747,6 +757,7 @@ _lwt_CheckEdgeCrossing( LWT_TOPOLOGY* topo,
       _lwt_release_edges(edges, num_edges);
       GEOSGeom_destroy(edgegg);
       GEOSFree(relate);
+      finishGEOS();
       if ( match == 2 ) {
         lwerror("GEOSRelatePatternMatch error: %s", lwgeom_geos_errmsg);
       } else {
@@ -761,6 +772,7 @@ _lwt_CheckEdgeCrossing( LWT_TOPOLOGY* topo,
       _lwt_release_edges(edges, num_edges);
       GEOSGeom_destroy(edgegg);
       GEOSFree(relate);
+      finishGEOS();
       if ( match == 2 ) {
         lwerror("GEOSRelatePatternMatch error: %s", lwgeom_geos_errmsg);
       } else {
@@ -775,6 +787,7 @@ _lwt_CheckEdgeCrossing( LWT_TOPOLOGY* topo,
       _lwt_release_edges(edges, num_edges);
       GEOSGeom_destroy(edgegg);
       GEOSFree(relate);
+      finishGEOS();
       if ( match == 2 ) {
         lwerror("GEOSRelatePatternMatch error: %s", lwgeom_geos_errmsg);
       } else {
@@ -792,6 +805,7 @@ _lwt_CheckEdgeCrossing( LWT_TOPOLOGY* topo,
               /* would be NULL if num_edges was 0 */
 
   GEOSGeom_destroy(edgegg);
+  finishGEOS();
 
   return 0;
 }
@@ -5112,6 +5126,7 @@ _lwt_GetEqualEdge( LWT_TOPOLOGY *topo, LWLINE *edge, int *forward )
     {
       _lwt_release_edges(edges, num);
       lwerror("Could not convert edge geometry to GEOS: %s", lwgeom_geos_errmsg);
+      finishGEOS();
       return -1;
     }
     for (i=0; i<num; ++i)
@@ -5124,6 +5139,7 @@ _lwt_GetEqualEdge( LWT_TOPOLOGY *topo, LWLINE *edge, int *forward )
       if ( ! gg )
       {
         GEOSGeom_destroy(edgeg);
+        finishGEOS();
         _lwt_release_edges(edges, num);
         lwerror("Could not convert edge geometry to GEOS: %s", lwgeom_geos_errmsg);
         return -1;
@@ -5133,6 +5149,7 @@ _lwt_GetEqualEdge( LWT_TOPOLOGY *topo, LWLINE *edge, int *forward )
       if ( equals == 2 )
       {
         GEOSGeom_destroy(edgeg);
+        finishGEOS();
         _lwt_release_edges(edges, num);
         lwerror("GEOSEquals exception: %s", lwgeom_geos_errmsg);
         return -1;
@@ -5175,6 +5192,7 @@ _lwt_GetEqualEdge( LWT_TOPOLOGY *topo, LWLINE *edge, int *forward )
           }
         }
         GEOSGeom_destroy(edgeg);
+        finishGEOS();
         _lwt_release_edges(edges, num);
         return id;
       }
@@ -5183,6 +5201,7 @@ _lwt_GetEqualEdge( LWT_TOPOLOGY *topo, LWLINE *edge, int *forward )
     _lwt_release_edges(edges, num);
   }
 
+  finishGEOS();
   return 0;
 }
 
@@ -6839,6 +6858,7 @@ _lwt_AddPoint(LWT_TOPOLOGY* topo, LWPOINT* point, double tol, int
   if (num == UINT64_MAX)
   {
     PGTOPO_BE_ERROR();
+    finishGEOS();
     return -1;
   }
   LWDEBUGF(1, "New point is within %.15g units of %llu edges", tol, num);
@@ -6859,10 +6879,12 @@ _lwt_AddPoint(LWT_TOPOLOGY* topo, LWPOINT* point, double tol, int
       /* should have invoked lwerror already, leaking memory */
       _lwt_release_edges(edges, num);
       lwerror("lwt_AddIsoNode failed");
+      finishGEOS();
       return -1;
     }
   }
 
+  finishGEOS();
   return id;
 }
 

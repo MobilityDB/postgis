@@ -86,6 +86,7 @@ do { \
 #define GEOS_FAIL() \
 do { \
 	lwerror("%s: GEOS Error: %s", __func__, lwgeom_geos_errmsg); \
+	finishGEOS(); \
 	return NULL; \
 } while (0)
 
@@ -94,6 +95,7 @@ do { \
 	do \
 	{ \
 		lwdebug(1, "%s: GEOS Error: %s", __func__, lwgeom_geos_errmsg); \
+		finishGEOS(); \
 		return NULL; \
 	} while (0)
 
@@ -101,6 +103,7 @@ do { \
 do { \
 	GEOS_FREE(__VA_ARGS__); \
 	GEOS_FAIL(); \
+	finishGEOS(); \
 } while (0)
 
 #define GEOS_FREE_AND_FAIL_DEBUG(...) \
@@ -108,6 +111,7 @@ do { \
 	{ \
 		GEOS_FREE(__VA_ARGS__); \
 		GEOS_FAIL_DEBUG(); \
+		finishGEOS(); \
 	} while (0)
 
 /* Return the consistent SRID of all inputs, or call lwerror
@@ -677,6 +681,7 @@ lwgeom_normalize(const LWGEOM* geom)
 	if (!(result = GEOS2LWGEOM(g, is3d))) GEOS_FREE_AND_FAIL(g);
 
 	GEOSGeom_destroy(g);
+	finishGEOS();
 	return result;
 }
 
@@ -729,6 +734,7 @@ lwgeom_intersection_prec(const LWGEOM* geom1, const LWGEOM* geom2, double prec)
 	if (!(result = GEOS2LWGEOM(g3, is3d))) GEOS_FREE_AND_FAIL(g1, g2, g3);
 
 	GEOS_FREE(g1, g2, g3);
+	finishGEOS();
 	return result;
 }
 
@@ -778,7 +784,7 @@ lwgeom_linemerge_directed(const LWGEOM* geom, int directed)
 		GEOS_FREE_AND_FAIL(g1, g3);
 
 	GEOS_FREE(g1, g3);
-
+	finishGEOS();
 	return result;
 }
 
@@ -827,6 +833,7 @@ lwgeom_unaryunion_prec(const LWGEOM* geom, double prec)
 		GEOS_FREE_AND_FAIL(g1, g3);
 
 	GEOS_FREE(g1, g3);
+	finishGEOS();
 
 	return result;
 }
@@ -879,6 +886,7 @@ lwgeom_difference_prec(const LWGEOM* geom1, const LWGEOM* geom2, double prec)
 		GEOS_FREE_AND_FAIL(g1, g2, g3);
 
 	GEOS_FREE(g1, g2, g3);
+	finishGEOS();
 	return result;
 }
 
@@ -930,6 +938,7 @@ lwgeom_symdifference_prec(const LWGEOM* geom1, const LWGEOM* geom2, double prec)
 		GEOS_FREE_AND_FAIL(g1, g2, g3);
 
 	GEOS_FREE(g1, g2, g3);
+	finishGEOS();
 	return result;
 }
 
@@ -962,6 +971,7 @@ lwgeom_centroid(const LWGEOM* geom)
 		GEOS_FREE_AND_FAIL(g1);
 
 	GEOS_FREE(g1, g3);
+	finishGEOS();
 
 	return result;
 }
@@ -997,6 +1007,7 @@ lwgeom_reduceprecision(const LWGEOM* geom, double gridSize)
 		GEOS_FREE_AND_FAIL(g1);
 
 	GEOS_FREE(g1, g3);
+	finishGEOS();
 
 	return result;
 #endif
@@ -1031,6 +1042,7 @@ lwgeom_pointonsurface(const LWGEOM *geom)
 		GEOS_FREE_AND_FAIL(g1, g3);
 
 	GEOS_FREE(g1, g3);
+	finishGEOS();
 
 	return result;
 }
@@ -1083,6 +1095,7 @@ lwgeom_union_prec(const LWGEOM* geom1, const LWGEOM* geom2, double gridSize)
 		GEOS_FREE_AND_FAIL(g1, g2, g3);
 
 	GEOS_FREE(g1, g2, g3);
+	finishGEOS();
 	return result;
 }
 
@@ -1115,6 +1128,7 @@ lwgeom_clip_by_rect(const LWGEOM *geom1, double x1, double y1, double x2, double
 		GEOS_FAIL_DEBUG();
 
 	result->srid = geom1->srid;
+	finishGEOS();
 
 	return result;
 }
@@ -1146,6 +1160,7 @@ lwgeom_buildarea(const LWGEOM* geom)
 	if (GEOSGetNumGeometries(g3) == 0)
 	{
 		GEOS_FREE(g1, g3);
+		finishGEOS();
 		return NULL;
 	}
 
@@ -1153,6 +1168,7 @@ lwgeom_buildarea(const LWGEOM* geom)
 		GEOS_FREE_AND_FAIL(g1, g3);
 
 	GEOS_FREE(g1, g3);
+	finishGEOS();
 
 	return result;
 }
@@ -1170,7 +1186,11 @@ lwgeom_is_simple(const LWGEOM* geom)
 
 	initGEOS(lwnotice, lwgeom_geos_error);
 
-	if (!(g = LWGEOM2GEOS(geom, AUTOFIX))) return -1;
+	if (!(g = LWGEOM2GEOS(geom, AUTOFIX)))
+	{
+		finishGEOS();
+		return -1;
+	}
 
 	simple = GEOSisSimple(g);
 	GEOSGeom_destroy(g);
@@ -1178,9 +1198,11 @@ lwgeom_is_simple(const LWGEOM* geom)
 	if (simple == 2) /* exception thrown */
 	{
 		lwerror("lwgeom_is_simple: %s", lwgeom_geos_errmsg);
+		finishGEOS();
 		return -1;
 	}
 
+	finishGEOS();
 	return simple ? LW_TRUE : LW_FALSE;
 }
 
@@ -1205,6 +1227,7 @@ lwgeom_geos_noop(const LWGEOM* geom)
 		GEOS_FREE_AND_FAIL(g);
 
 	GEOS_FREE(g);
+	finishGEOS();
 
 	return result;
 }
@@ -1233,6 +1256,7 @@ lwgeom_snap(const LWGEOM* geom1, const LWGEOM* geom2, double tolerance)
 		GEOS_FREE_AND_FAIL(g1, g2, g3);
 
 	GEOS_FREE(g1, g2, g3);
+	finishGEOS();
 	return result;
 }
 
@@ -1260,6 +1284,7 @@ lwgeom_sharedpaths(const LWGEOM* geom1, const LWGEOM* geom2)
 		GEOS_FREE_AND_FAIL(g1, g2, g3);
 
 	GEOS_FREE(g1, g2, g3);
+	finishGEOS();
 	return result;
 }
 
@@ -1283,6 +1308,7 @@ lwline_offsetcurve(const LWLINE *lwline, double size, int quadsegs, int joinStyl
 	if (!g3)
 	{
 		GEOS_FREE(g1);
+		finishGEOS();
 		return NULL;
 	}
 
@@ -1292,6 +1318,7 @@ lwline_offsetcurve(const LWLINE *lwline, double size, int quadsegs, int joinStyl
 		GEOS_FREE_AND_FAIL(g1, g3);
 
 	GEOS_FREE(g1, g3);
+	finishGEOS();
 	return result;
 }
 
@@ -1496,6 +1523,7 @@ lwpoly_to_points(const LWPOLY* lwpoly, uint32_t npoints, int32_t seed)
 	g = (GEOSGeometry*)LWGEOM2GEOS(lwgeom, 0);
 	if (!g)
 	{
+		finishGEOS();
 		lwerror("%s: Geometry could not be converted to GEOS: %s", __func__, lwgeom_geos_errmsg);
 		return NULL;
 	}
@@ -1523,6 +1551,7 @@ lwpoly_to_points(const LWPOLY* lwpoly, uint32_t npoints, int32_t seed)
 			{
 				GEOSPreparedGeom_destroy(gprep);
 				GEOSGeom_destroy(g);
+				finishGEOS();
 				lwerror("%s: GEOS exception on GEOSPreparedIntersects: %s", __func__, lwgeom_geos_errmsg);
 				return NULL;
 			}
@@ -1589,6 +1618,7 @@ lwpoly_to_points(const LWPOLY* lwpoly, uint32_t npoints, int32_t seed)
 			{
 				GEOSPreparedGeom_destroy(gprep);
 				GEOSGeom_destroy(g);
+				finishGEOS();
 				lwerror("%s: GEOS exception on GEOSPreparedIntersects: %s", __func__, lwgeom_geos_errmsg);
 				return NULL;
 			}
@@ -1606,7 +1636,7 @@ lwpoly_to_points(const LWPOLY* lwpoly, uint32_t npoints, int32_t seed)
 			/* Short-circuit check for ctrl-c occasionally */
 			npoints_tested++;
 			if (npoints_tested % 10000 == 0)
-				LW_ON_INTERRUPT(GEOSPreparedGeom_destroy(gprep); GEOSGeom_destroy(g); return NULL);
+				LW_ON_INTERRUPT(GEOSPreparedGeom_destroy(gprep); GEOSGeom_destroy(g); finishGEOS(); return NULL);
 
 			if (done) break;
 		}
@@ -1615,6 +1645,7 @@ lwpoly_to_points(const LWPOLY* lwpoly, uint32_t npoints, int32_t seed)
 
 	GEOSPreparedGeom_destroy(gprep);
 	GEOSGeom_destroy(g);
+	finishGEOS();
 	lwfree(cells);
 
 	return mpt;
@@ -1778,6 +1809,7 @@ lwgeom_delaunay_triangulation(const LWGEOM* geom, double tolerance, int32_t outp
 		if (!result)
 		{
 			GEOS_FREE(g1, g3);
+			finishGEOS();
 			lwerror("%s: cannot convert output geometry", __func__);
 			return NULL;
 		}
@@ -1787,6 +1819,7 @@ lwgeom_delaunay_triangulation(const LWGEOM* geom, double tolerance, int32_t outp
 		GEOS_FREE_AND_FAIL(g1, g3);
 
 	GEOS_FREE(g1, g3);
+	finishGEOS();
 	return result;
 }
 
@@ -1856,12 +1889,17 @@ lwgeom_voronoi_diagram(const LWGEOM* g, const GBOX* env, double tolerance, int o
 	 * geometry types that may not be supported by GEOS, and reduces the memory requirements in cases of many
 	 * geometries with few points (such as LWMPOINT).*/
 	coords = lwgeom_get_geos_coordseq_2d(g, num_points);
-	if (!coords) return NULL;
+	if (!coords)
+	{
+		finishGEOS();
+		return NULL;
+	}
 
 	geos_geom = GEOSGeom_createLineString(coords);
 	if (!geos_geom)
 	{
 		GEOSCoordSeq_destroy(coords);
+		finishGEOS();
 		return NULL;
 	}
 
@@ -1875,11 +1913,13 @@ lwgeom_voronoi_diagram(const LWGEOM* g, const GBOX* env, double tolerance, int o
 	if (!geos_result)
 	{
 		lwerror("GEOSVoronoiDiagram: %s", lwgeom_geos_errmsg);
+		finishGEOS();
 		return NULL;
 	}
 
 	lwgeom_result = GEOS2LWGEOM(geos_result, is_3d);
 	GEOSGeom_destroy(geos_result);
+	finishGEOS();
 
 	lwgeom_set_srid(lwgeom_result, srid);
 
@@ -1919,6 +1959,7 @@ lwgeom_concavehull(const LWGEOM* geom, double ratio, uint32_t allow_holes)
 		GEOS_FREE_AND_FAIL(g1, g3);
 
 	GEOS_FREE(g1, g3);
+	finishGEOS();
 	return result;
 }
 
@@ -1945,6 +1986,7 @@ lwgeom_simplify_polygonal(const LWGEOM* geom, double vertex_fraction, uint32_t i
 		GEOS_FREE_AND_FAIL(g1, g3);
 
 	GEOS_FREE(g1, g3);
+	finishGEOS();
 	return result;
 }
 
@@ -1972,6 +2014,7 @@ lwgeom_triangulate_polygon(const LWGEOM* geom)
 		GEOS_FREE_AND_FAIL(g1, g3);
 
 	GEOS_FREE(g1, g3);
+	finishGEOS();
 	return result;
 }
 

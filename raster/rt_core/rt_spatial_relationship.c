@@ -168,6 +168,7 @@ rt_errorstate rt_raster_geos_spatial_relationship(
 	/* same srid */
 	if (rt_raster_get_srid(rast1) != rt_raster_get_srid(rast2)) {
 		rterror("rt_raster_geos_spatial_relationship: The two rasters provided have different SRIDs");
+		finishGEOS();
 		return ES_ERROR;
 	}
 
@@ -176,11 +177,13 @@ rt_errorstate rt_raster_geos_spatial_relationship(
 	/* get LWMPOLY of each band */
 	if (rt_raster_surface(rast1, nband1, &surface1) != ES_NONE) {
 		rterror("rt_raster_geos_spatial_relationship: Could not get surface of the specified band from the first raster");
+		finishGEOS();
 		return ES_ERROR;
 	}
 	if (rt_raster_surface(rast2, nband2, &surface2) != ES_NONE) {
 		rterror("rt_raster_geos_spatial_relationship: Could not get surface of the specified band from the second raster");
 		lwmpoly_free(surface1);
+		finishGEOS();
 		return ES_ERROR;
 	}
 
@@ -188,6 +191,7 @@ rt_errorstate rt_raster_geos_spatial_relationship(
 	if (surface1 == NULL || surface2 == NULL) {
 		if (surface1 != NULL) lwmpoly_free(surface1);
 		if (surface2 != NULL) lwmpoly_free(surface2);
+		finishGEOS();
 		return ES_NONE;
 	}
 
@@ -197,6 +201,7 @@ rt_errorstate rt_raster_geos_spatial_relationship(
 	if (geom1 == NULL) {
 		rterror("rt_raster_geos_spatial_relationship: Could not convert surface of the specified band from the first raster to a GEOSGeometry");
 		lwmpoly_free(surface2);
+		finishGEOS();
 		return ES_ERROR;
 	}
 
@@ -204,6 +209,7 @@ rt_errorstate rt_raster_geos_spatial_relationship(
 	lwmpoly_free(surface2);
 	if (geom2 == NULL) {
 		rterror("rt_raster_geos_spatial_relationship: Could not convert surface of the specified band from the second raster to a GEOSGeometry");
+		finishGEOS();
 		return ES_ERROR;
 	}
 
@@ -250,6 +256,7 @@ rt_errorstate rt_raster_geos_spatial_relationship(
 	else
 		flag = ES_ERROR;
 
+	finishGEOS();
 	return flag;
 }
 
@@ -1108,11 +1115,13 @@ rt_raster_intersects(
 			RASTER_DEBUGF(4, "convex hulls of rasters do %sintersect", rtn != 1 ? "NOT " : "");
 			if (rtn != 1) {
 				*intersects = 0;
+				finishGEOS();
 				return ES_NONE;
 			}
 			/* band isn't specified */
 			else if (nband1 < 0) {
 				*intersects = 1;
+				finishGEOS();
 				return ES_NONE;
 			}
 		}
@@ -1178,6 +1187,7 @@ rt_raster_intersects(
 	if (NULL == bandS) {
 		rterror("rt_raster_intersects: Could not get band %d of the first raster", nbandS);
 		*intersects = 0;
+		finishGEOS();
 		return ES_ERROR;
 	}
 
@@ -1190,6 +1200,7 @@ rt_raster_intersects(
 	if (NULL == bandL) {
 		rterror("rt_raster_intersects: Could not get band %d of the first raster", nbandL);
 		*intersects = 0;
+		finishGEOS();
 		return ES_ERROR;
 	}
 
@@ -1210,6 +1221,7 @@ rt_raster_intersects(
 	) {
 		RASTER_DEBUG(3, "One of the two raster bands is NODATA. The two rasters do not intersect");
 		*intersects = 0;
+		finishGEOS();
 		return ES_NONE;
 	}
 
@@ -1257,6 +1269,7 @@ rt_raster_intersects(
 							if ((hasnodataL == FALSE) || !isnodataL) {
 								RASTER_DEBUG(3, "The two rasters do intersect");
 								*intersects = 1;
+								finishGEOS();
 								return ES_NONE;
 							}
 						}
@@ -1275,7 +1288,11 @@ rt_raster_intersects(
 		nodataS, nodataL
 	);
 
-	if (*intersects) return ES_NONE;
+	if (*intersects)
+	{
+		finishGEOS();
+		return ES_NONE;
+	}
 
 	RASTER_DEBUG(4, "Testing larger raster vs smaller raster");
 	*intersects = rt_raster_intersects_algorithm(
@@ -1285,11 +1302,17 @@ rt_raster_intersects(
 		nodataL, nodataS
 	);
 
-	if (*intersects) return ES_NONE;
+	if (*intersects)
+	{
+		finishGEOS();
+		return ES_NONE;
+	}
+
 
 	RASTER_DEBUG(3, "The two rasters do not intersect");
 
 	*intersects = 0;
+	finishGEOS();
 	return ES_NONE;
 }
 
@@ -1362,6 +1385,7 @@ rt_raster_intersection_fractions(
 	{
 		rt_raster_destroy(rast_out);
 		rterror("%s: Could not convert LWGEOM to GEOSGeometry", __func__);
+		finishGEOS();
 		return NULL;
 	}
 
@@ -1382,9 +1406,11 @@ rt_raster_intersection_fractions(
 	{
 		rt_raster_destroy(rast_out);
 		rterror("%s: GEOSGridIntersectionFractions call failed", __func__);
+		finishGEOS();
 		return NULL;
 	}
 
+	finishGEOS();
 	return rast_out; /* Return the newly created raster and band*/
 }
 #endif /* POSTGIS_GEOS_VERSION >= 31400 */

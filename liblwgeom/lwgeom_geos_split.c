@@ -69,6 +69,7 @@ lwline_split_by_line(const LWLINE* lwline_in, const LWGEOM* blade_in)
 	g1 = LWGEOM2GEOS((LWGEOM*)lwline_in, 0);
 	if ( ! g1 )
 	{
+		finishGEOS();
 		lwerror("LWGEOM2GEOS: %s", lwgeom_geos_errmsg);
 		return NULL;
 	}
@@ -76,6 +77,7 @@ lwline_split_by_line(const LWLINE* lwline_in, const LWGEOM* blade_in)
 	if ( ! g2 )
 	{
 		GEOSGeom_destroy(g1);
+		finishGEOS();
 		lwerror("LWGEOM2GEOS: %s", lwgeom_geos_errmsg);
 		return NULL;
 	}
@@ -88,6 +90,7 @@ lwline_split_by_line(const LWLINE* lwline_in, const LWGEOM* blade_in)
 		if ( ! gdiff )
 		{
 			GEOSGeom_destroy(g1);
+			finishGEOS();
 			lwerror("GEOSBoundary: %s", lwgeom_geos_errmsg);
 			return NULL;
 		}
@@ -98,15 +101,17 @@ lwline_split_by_line(const LWLINE* lwline_in, const LWGEOM* blade_in)
 	ret = GEOSRelatePattern(g1, g2, "1********");
 	if ( 2 == ret )
 	{
-		lwerror("GEOSRelatePattern: %s", lwgeom_geos_errmsg);
 		GEOSGeom_destroy(g1);
 		GEOSGeom_destroy(g2);
+		finishGEOS();
+		lwerror("GEOSRelatePattern: %s", lwgeom_geos_errmsg);
 		return NULL;
 	}
 	if ( ret )
 	{
 		GEOSGeom_destroy(g1);
 		GEOSGeom_destroy(g2);
+		finishGEOS();
 		lwerror("Splitter line has linear intersection with input");
 		return NULL;
 	}
@@ -117,6 +122,7 @@ lwline_split_by_line(const LWLINE* lwline_in, const LWGEOM* blade_in)
 	GEOSGeom_destroy(g2);
 	if (gdiff == NULL)
 	{
+		finishGEOS();
 		lwerror("GEOSDifference: %s", lwgeom_geos_errmsg);
 		return NULL;
 	}
@@ -125,6 +131,7 @@ lwline_split_by_line(const LWLINE* lwline_in, const LWGEOM* blade_in)
 	GEOSGeom_destroy(gdiff);
 	if (NULL == diff)
 	{
+		finishGEOS();
 		lwerror("GEOS2LWGEOM: %s", lwgeom_geos_errmsg);
 		return NULL;
 	}
@@ -139,13 +146,13 @@ lwline_split_by_line(const LWLINE* lwline_in, const LWGEOM* blade_in)
 	}
 	else
 	{
-	  /* Set SRID */
+		/* Set SRID */
 		lwgeom_set_srid((LWGEOM*)out, lwline_in->srid);
-	  /* Force collection type */
-	  out->type = COLLECTIONTYPE;
+		/* Force collection type */
+		out->type = COLLECTIONTYPE;
 	}
 
-
+	finishGEOS();
 	return (LWGEOM*)out;
 }
 
@@ -373,6 +380,7 @@ lwpoly_split_by_line(const LWPOLY* lwpoly_in, const LWGEOM* blade_in)
 	g1 = LWGEOM2GEOS((LWGEOM*)lwpoly_in, 0);
 	if ( NULL == g1 )
 	{
+		finishGEOS();
 		lwerror("LWGEOM2GEOS: %s", lwgeom_geos_errmsg);
 		return NULL;
 	}
@@ -380,6 +388,7 @@ lwpoly_split_by_line(const LWPOLY* lwpoly_in, const LWGEOM* blade_in)
 	if ( NULL == g1_bounds )
 	{
 		GEOSGeom_destroy(g1);
+		finishGEOS();
 		lwerror("GEOSBoundary: %s", lwgeom_geos_errmsg);
 		return NULL;
 	}
@@ -389,6 +398,7 @@ lwpoly_split_by_line(const LWPOLY* lwpoly_in, const LWGEOM* blade_in)
 	{
 		GEOSGeom_destroy(g1);
 		GEOSGeom_destroy(g1_bounds);
+		finishGEOS();
 		lwerror("LWGEOM2GEOS: %s", lwgeom_geos_errmsg);
 		return NULL;
 	}
@@ -399,6 +409,7 @@ lwpoly_split_by_line(const LWPOLY* lwpoly_in, const LWGEOM* blade_in)
 		GEOSGeom_destroy(g1);
 		GEOSGeom_destroy(g2);
 		GEOSGeom_destroy(g1_bounds);
+		finishGEOS();
 		lwerror("GEOSUnion: %s", lwgeom_geos_errmsg);
 		return NULL;
 	}
@@ -410,6 +421,7 @@ lwpoly_split_by_line(const LWPOLY* lwpoly_in, const LWGEOM* blade_in)
 		GEOSGeom_destroy(g2);
 		GEOSGeom_destroy(g1_bounds);
 		GEOSGeom_destroy((GEOSGeometry*)vgeoms[0]);
+		finishGEOS();
 		lwerror("GEOSPolygonize: %s", lwgeom_geos_errmsg);
 		return NULL;
 	}
@@ -422,6 +434,7 @@ lwpoly_split_by_line(const LWPOLY* lwpoly_in, const LWGEOM* blade_in)
 		GEOSGeom_destroy(g1_bounds);
 		GEOSGeom_destroy((GEOSGeometry*)vgeoms[0]);
 		GEOSGeom_destroy(polygons);
+		finishGEOS();
 		lwerror("%s [%d] Unexpected return from GEOSpolygonize", __FILE__, __LINE__);
 		return 0;
 	}
@@ -451,6 +464,7 @@ lwpoly_split_by_line(const LWPOLY* lwpoly_in, const LWGEOM* blade_in)
 			GEOSGeom_destroy(g1_bounds);
 			GEOSGeom_destroy((GEOSGeometry*)vgeoms[0]);
 			GEOSGeom_destroy(polygons);
+			finishGEOS();
 			lwerror("GEOSPointOnSurface: %s", lwgeom_geos_errmsg);
 			return NULL;
 		}
@@ -464,6 +478,7 @@ lwpoly_split_by_line(const LWPOLY* lwpoly_in, const LWGEOM* blade_in)
 			GEOSGeom_destroy((GEOSGeometry*)vgeoms[0]);
 			GEOSGeom_destroy(polygons);
 			GEOSGeom_destroy(pos);
+			finishGEOS();
 			lwerror("GEOSContains: %s", lwgeom_geos_errmsg);
 			return NULL;
 		}
@@ -486,6 +501,7 @@ lwpoly_split_by_line(const LWPOLY* lwpoly_in, const LWGEOM* blade_in)
 	GEOSGeom_destroy(g1_bounds);
 	GEOSGeom_destroy((GEOSGeometry*)vgeoms[0]);
 	GEOSGeom_destroy(polygons);
+	finishGEOS();
 
 	return (LWGEOM*)out;
 }

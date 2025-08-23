@@ -319,6 +319,7 @@ lwgeom_make_valid_params(LWGEOM* lwgeom_in, char* make_valid_params)
 	}
 	if (!geosgeom)
 	{
+		finishGEOS();
 		lwerror("Couldn't convert POSTGIS geom to GEOS: %s", lwgeom_geos_errmsg);
 		return NULL;
 	}
@@ -380,7 +381,11 @@ lwgeom_make_valid_params(LWGEOM* lwgeom_in, char* make_valid_params)
 	}
 #endif
 	GEOSGeom_destroy(geosgeom);
-	if (!geosout) return NULL;
+	if (!geosout)
+	{
+		finishGEOS();
+		return NULL;
+	}
 
 	lwgeom_out = GEOS2LWGEOM(geosout, is3d);
 	GEOSGeom_destroy(geosout);
@@ -401,5 +406,6 @@ lwgeom_make_valid_params(LWGEOM* lwgeom_in, char* make_valid_params)
 	}
 
 	lwgeom_out->srid = lwgeom_in->srid;
+	finishGEOS();
 	return lwgeom_out;
 }

@@ -842,6 +842,7 @@ lwt_Polygonize(LWT_TOPOLOGY* topo)
       lwerror("Polygonize: face table is not empty.");
     }
     /* Backend error, message should have been printed already */
+    finishGEOS();
     return -1;
   }
 
@@ -850,9 +851,11 @@ lwt_Polygonize(LWT_TOPOLOGY* topo)
   if ( ! edgetable.edges ) {
     if (edgetable.size == 0) {
       /* not an error: no Edges */
+      finishGEOS();
       return 0;
     }
     /* error should have been printed already */
+    finishGEOS();
     return -1;
   }
 
@@ -901,6 +904,7 @@ lwt_Polygonize(LWT_TOPOLOGY* topo)
       LWT_EDGERING_ARRAY_CLEAN( &shells );
       lwerror("Errors fetching or registering face-missing edges: %s",
               lwt_be_lastErrorMessage(iface));
+      finishGEOS();
       return -1;
   }
 
@@ -923,6 +927,7 @@ lwt_Polygonize(LWT_TOPOLOGY* topo)
       LWT_EDGERING_ARRAY_CLEAN( &shells );
       lwerror("Errors finding face containing ring: %s",
               lwt_be_lastErrorMessage(iface));
+      finishGEOS();
       return -1;
     }
     int ret = _lwt_UpdateEdgeRingSideFace(topo, holes.rings[i], containing_face);
@@ -933,6 +938,7 @@ lwt_Polygonize(LWT_TOPOLOGY* topo)
       LWT_EDGERING_ARRAY_CLEAN( &shells );
       lwerror("Errors updating edgering side face: %s",
               lwt_be_lastErrorMessage(iface));
+      finishGEOS();
       return -1;
     }
   }
@@ -945,6 +951,7 @@ lwt_Polygonize(LWT_TOPOLOGY* topo)
   LWT_EDGERING_ARRAY_CLEAN( &holes );
   LWT_EDGERING_ARRAY_CLEAN( &shells );
 
+  finishGEOS();
   return 0;
 }
 
